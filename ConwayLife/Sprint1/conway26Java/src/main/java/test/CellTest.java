@@ -15,7 +15,7 @@ public class CellTest {
 	@Before
 	public void setup() {
 		System.out.println("ConwayLifeTest | setup");	
-	 	c = new Cell(true);
+	 	c = new Cell(false);
 	}
 
 	@After

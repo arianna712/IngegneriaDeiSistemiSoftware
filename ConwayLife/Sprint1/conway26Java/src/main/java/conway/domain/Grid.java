@@ -1,18 +1,23 @@
 package main.java.conway.domain;
 
 public class Grid implements IGrid{
-	private Cell[][] grid;
+	private ICell[][] grid;
+	
+	public Grid(int rows, int cols) {
+		if(rows <= 0 || cols <= 0) throw new IllegalArgumentException();
+		this.grid = new Cell[rows][cols];
+	}
 
 	@Override
 	public int getRowsNumber() {
 		// TODO Auto-generated method stub
-		return 0;
+		return grid.length;
 	}
 
 	@Override
 	public int getColumnsNumber() {
 		// TODO Auto-generated method stub
-		return 0;
+		return grid[0].length;
 	}
 
 	@Override

@@ -17,7 +17,7 @@ private IGrid g;
 	@Before
 	public void setup() {
 		System.out.println("ConwayLifeTest | setup");	
-	 	g = new Grid();
+	 	g = new Grid(3, 4);
 	}
 
 	@After
@@ -26,14 +26,28 @@ private IGrid g;
 	}
 	
 	@Test 
-	public void testCellAlive() {
-		System.out.println("ConwayLifeTest | doing alive");
+	public void testDims() {
+		System.out.println("testDims-----------");
+		int nr = g.getRowsNumber();
+		int nc = g.getColumnsNumber();
+		assertTrue( nr == 3 && nc == 4);
+	}
+	
+	@Test 
+	public void testCGridCellValue() {
+		System.out.println("testCGridCellValue------------");
+		g.setCellValue(0, 0, true);
+		assertTrue(g.getCellValue(0,0));
+		assertTrue(g.getCellValue(0,1));
 		
 	}
 	
 	@Test 
-	public void testCellDead() {
-		System.out.println("ConwayLifeTest | doing dead");
+	public void testGridRep() {
+		System.out.println("testGridRep------------");
+		System.out.println(""+g);
+		assertTrue(g.toString().startsWith(". . . . ."));
 		
 	}
+	
 }

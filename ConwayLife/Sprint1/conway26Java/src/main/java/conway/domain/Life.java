@@ -40,7 +40,7 @@ public class Life implements LifeInterface{
      // riempiamo gridA con le celle iniziali
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                gridA.setCell(r, c, initialGrid[r][c]);
+                gridA.setCellValue(r, c, initialGrid[r][c]);
             }
         }
         
@@ -67,7 +67,7 @@ public class Life implements LifeInterface{
                 boolean isAlive = currentGrid.getCell(r, c).isAlive();
                 //apply rules
                 if (isAlive) {
-                    nextGrid.setCell(r, c, isAlive ? (neighbors == 2 || neighbors == 3) : (neighbors == 3));
+                    nextGrid.setCellValue(r, c, isAlive ? (neighbors == 2 || neighbors == 3) : (neighbors == 3));
                 }
             }
         }
@@ -141,6 +141,12 @@ public class Life implements LifeInterface{
 	public int getCols() {
  		return 0;
 	}
+
+	@Override
+	public String gridRep() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	//Versione NAIVE
 //	private boolean[][] deepCopy(boolean[][] original) {
@@ -177,9 +183,9 @@ public class Life implements LifeInterface{
 	        })
 	        .collect(Collectors.joining("\n")); // Uniamo le righe con un a capo
 	}
-	*/
+	
 	public String gridRep() {
-	    Cell[][] cells = currentGrid.getGrid(); // prendi la matrice di Cell
+	    Cell[][] cells = currentGrid.; // prendi la matrice di Cell
 
 	    return Arrays.stream(cells)
 	        .map(row -> {
@@ -191,4 +197,5 @@ public class Life implements LifeInterface{
 	        })
 	        .collect(Collectors.joining("\n"));
 	}
+	*/
 }
