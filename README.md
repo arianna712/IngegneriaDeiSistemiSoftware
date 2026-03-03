@@ -27,3 +27,5 @@ Laboratorio di <b>Ingegneria dei Sistemi Software</b> a.a. 2025/2026 di Tosello 
 
 - [ConwayLife Sprint3(ConwayLife/Sprint3/conway26Java)]: evoluzione del sistema in locale
   usando una pagina HTML come dispositivo di I/O. <i>Distribuzione</i>: Docker yaml.
+
+  INDEX https://arianna712.github.io/IngegneriaDeiSistemiSoftware/
