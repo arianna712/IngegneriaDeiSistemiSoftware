@@ -7,12 +7,16 @@ public class Life implements LifeInterface{
     private final int cols;
     
     // Due matrici distinte
-    private boolean[][] gridA;
-    private boolean[][] gridB;
+    //private boolean[][] gridA;
+    private Grid gridA;
+    //private boolean[][] gridB;
+    private Grid gridB;
     
  // Un riferimento che punta sempre alla griglia che contiene lo stato attuale
-    private boolean[][] currentGrid;
-    private boolean[][] nextGrid;
+    //private boolean[][] currentGrid;
+    private Grid currentGrid;
+    //private boolean[][] nextGrid;
+    private Grid nextGrid;
     
    public static LifeInterface CreateGameRules() {
 	   return new Life(5, 5); 
@@ -26,10 +30,20 @@ public class Life implements LifeInterface{
         this.cols = initialGrid[0].length;
         
         // Inizializziamo entrambe le matrici
-        this.gridA = new boolean[rows][cols];
-        this.gridB = new boolean[rows][cols];
+        //this.gridA = new boolean[rows][cols]; //TODO new Grid() 
+        this.gridA = new Grid(rows, cols);
+        //this.gridB = new boolean[rows][cols];
+        this.gridB = new Grid(rows, cols);
         
-        this.gridA = deepCopyJava8(initialGrid);
+        //this.gridA = deepCopyJava8(initialGrid);
+        
+     // riempiamo gridA con le celle iniziali
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                gridA.setCell(r, c, initialGrid[r][c]);
+            }
+        }
+        
         this.currentGrid = gridA;
         this.nextGrid    = gridB;   
     }
@@ -38,8 +52,8 @@ public class Life implements LifeInterface{
     public Life(int rows, int cols) {
     	this.rows = rows;
         this.cols = cols;
-        this.gridA = new boolean[rows][cols];
-        this.gridB = new boolean[rows][cols];
+        this.gridA = new Grid(rows, cols);
+        this.gridB = new Grid(rows, cols);
         this.currentGrid = gridA;
         this.nextGrid    = gridB;   
     }
@@ -50,19 +64,17 @@ public class Life implements LifeInterface{
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 int neighbors = countNeighborsLive(r, c);
-                boolean isAlive = currentGrid[r][c];
+                boolean isAlive = currentGrid.getCell(r, c).isAlive();
                 //apply rules
                 if (isAlive) {
-                    nextGrid[r][c] = (neighbors == 2 || neighbors == 3);
-                } else {
-                    nextGrid[r][c] = (neighbors == 3);
+                    nextGrid.setCell(r, c, isAlive ? (neighbors == 2 || neighbors == 3) : (neighbors == 3));
                 }
             }
         }
 
         // --- IL PING-PONG ---
         // Scambiamo i riferimenti: ciò che era 'next' diventa 'current'
-        boolean[][] temp = currentGrid;
+        Grid temp = currentGrid;
         currentGrid      = nextGrid;
         nextGrid         = temp;
         // Nota: non abbiamo creato nuovi oggetti, abbiamo solo spostato i puntatori
@@ -70,6 +82,7 @@ public class Life implements LifeInterface{
     
     protected int countNeighborsLive(int row, int col) {
         int count = 0;
+        /*
         if (row-1 >= 0) {
         	if( currentGrid[row-1][col] ) count++;
         }
@@ -93,20 +106,30 @@ public class Life implements LifeInterface{
         }
         if (row+1 < rows && col+1 < cols) {
         	if( currentGrid[row+1][col+1] ) count++;
-       }
+       }*/
+        
+        for (int r = row - 1; r <= row + 1; r++) {
+            for (int c = col - 1; c <= col + 1; c++) {
+                if ((r == row && c == col) || r < 0 || c < 0 || r >= rows || c >= cols) continue;
+                if (currentGrid.getCell(r, c).isAlive()) count++;
+            }
+        }
         //System.out.println("Cell (" + row + "," + col + ") has " + count + " live neighbors.");
         return count;
     }
 
 
     // Metodi di utilità per i test
-    public boolean getCell(int r, int c) { return currentGrid[r][c]; }
-    public void setCell(int r, int c, boolean state) { currentGrid[r][c] = state; }
-    public boolean[][] getGrid() { return currentGrid; }
+    //public boolean getCell(int r, int c) { return currentGrid[r][c]; }
+    public boolean getCell(int r, int c) {
+        return currentGrid.getCell(r, c).isAlive();
+    }
+    //public void setCell(int r, int c, boolean state) { currentGrid[r][c] = state; }
+    //public boolean[][] getGrid() { return currentGrid; }
 
 	@Override
 	public boolean isAlive(int row, int col) {
-		return currentGrid[row][col];
+		return currentGrid.getCell(row, col).isAlive();
 	}
 
 	@Override
@@ -134,12 +157,14 @@ public class Life implements LifeInterface{
 //	}
 	
 
+	/*
 	private boolean[][] deepCopyJava8(boolean[][] original) {
 	    return Arrays.stream(original)
 	                 .map(boolean[]::clone)
 	                 .toArray(boolean[][]::new);
 	}
 	
+	TODO adatta griRep
 	public String gridRep( ) {
 	    return Arrays.stream(currentGrid) // Stream di boolean[] (le righe)
 	        .map(row -> {
@@ -151,5 +176,19 @@ public class Life implements LifeInterface{
 	            return sb.toString();
 	        })
 	        .collect(Collectors.joining("\n")); // Uniamo le righe con un a capo
+	}
+	*/
+	public String gridRep() {
+	    Cell[][] cells = currentGrid.getGrid(); // prendi la matrice di Cell
+
+	    return Arrays.stream(cells)
+	        .map(row -> {
+	            StringBuilder sb = new StringBuilder();
+	            for (Cell cell : row) {
+	                sb.append(cell.isAlive() ? "O " : ". ");
+	            }
+	            return sb.toString();
+	        })
+	        .collect(Collectors.joining("\n"));
 	}
 }

@@ -4,7 +4,10 @@ public class Cell implements ICell{
 	
 	//Definisco la rappresentazione concreta di una cella
 	private boolean status;
-	
+
+	public Cell(boolean status) {
+		this.status=status;
+	}
 
 	@Override
 	public void setStatus(boolean aliveness) {

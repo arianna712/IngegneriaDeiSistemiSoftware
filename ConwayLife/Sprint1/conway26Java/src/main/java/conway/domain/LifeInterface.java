@@ -8,7 +8,7 @@ public interface LifeInterface {
     boolean isAlive(int row, int col);
 
     /** Imposta lo stato di una cella */
-    void setCell(int row, int col, boolean alive);
+    //void setCell(int row, int col, boolean alive);
 
     /** Restituisce il numero di righe e colonne */
     int getRows();

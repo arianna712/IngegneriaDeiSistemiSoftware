@@ -17,7 +17,7 @@ private IGrid g;
 	@Before
 	public void setup() {
 		System.out.println("ConwayLifeTest | setup");	
-	 	g = new Grid();
+	 	g = new Grid(4, 3);
 	}
 
 	@After
