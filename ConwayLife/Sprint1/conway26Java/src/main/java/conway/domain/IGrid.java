@@ -1,10 +1,11 @@
 package main.java.conway.domain;
 
 public interface IGrid {
-	public void setGrid (Cell[][] matrix);
-	public Cell getCell(int row, int col);
-	public void setCell(int row, int col, boolean alive);
-	public Cell[][] getGrid();
-	
+	public int getRowsNumber();
+	public int getColumnsNumber();
+	public void setCellValue(int x, int y, boolean state);
+	public ICell getCell(int x, int y);
+	public boolean getCellValue(int x, int y);
+	public void reset();	
 	
 }
