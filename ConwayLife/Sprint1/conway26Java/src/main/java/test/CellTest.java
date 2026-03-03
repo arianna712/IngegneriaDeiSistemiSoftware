@@ -1,5 +1,4 @@
 package main.java.test;
-
 import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
@@ -10,32 +9,32 @@ import main.java.conway.domain.Cell;
 import main.java.conway.domain.ICell;
 
 public class CellTest {
-	private ICell c;
-	
+private ICell c;
+
 	@Before
 	public void setup() {
 		System.out.println("ConwayLifeTest | setup");	
-	 	c = new Cell(false);
+	    c = new Cell();
 	}
-
 	@After
 	public void down() {
 		System.out.println("ConwayLifeTest | down");
 	}
 	
-	@Test 
+	@Test
 	public void testCellAlive() {
 		System.out.println("ConwayLifeTest | doing alive");
 		c.setStatus(true);
 		boolean r = c.isAlive();
 		assertTrue(r);
+		
 	}
 	
-	@Test 
+	@Test
 	public void testCellDead() {
 		System.out.println("ConwayLifeTest | doing dead");
 		c.setStatus(false);
 		boolean r = c.isAlive();
-		assertTrue(!r);
-	}
+		assertTrue( !r);
+	}	
 }
