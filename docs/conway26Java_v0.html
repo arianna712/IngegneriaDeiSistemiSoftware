@@ -70,8 +70,8 @@ R2  L’utente umano deve poter:
         void nextGeneration(); //primitiva: Calcola l'evoluzione dello stato alla generazione successiva
         boolean isAlive(int row, int col); //non primitiva: Restituisce lo stato di una cella specifica
         void setCell(int row, int col, boolean alive); //non primitiva: Imposta lo stato di una cella
-        ICell getCell(int x, int y); //primitiva: Restituisce la Cella
-        Grid getGrid(); //primitiva: Restituisce la grid
+        ICell getCell(int x, int y); //non primitiva: Restituisce la Cella
+        IGrid getGrid(); //primitiva: Restituisce la grid
         void resetGrids(); //non primitiva: Restituisce una rappresentazione grafica testuale della griglia
     }
  </pre>
