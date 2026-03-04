@@ -45,12 +45,35 @@ R2  L’utente umano deve poter:
 
 <h2>Requirement analysis</h2>
  <pre>
-    - Il sistema deve avere una griglia
-    - Il sistema deve avere delle celle
-    - La griglia è composta di celle
-    - Le celle hanno lo stato viva o morta
-    - Il sistema ha una classe che gestisce l'evoluzione del gioco secondo le regole
- </ol>
+    Per Cell dopo aver parlato con il committente formalizzo il seguente modello: 
+
+    public interface ICell {
+	    void setStatus(boolean v);
+	    boolean isAlive();
+	    void switchCellState();
+    }
+
+    Per Grid dopo aver parlato con il committente formalizzo il seguente modello:
+
+    public interface IGrid {
+	    public int getRowsNum();
+	    public int getColsNum();
+	    public void setCellValue(int x, int y, boolean state);
+	    public ICell getCell(int x, int y);
+	    public boolean getCellValue(int x, int y);
+	    public void reset();
+    }
+
+    Per Life dopo aver parlato con il committente formalizzo il seguente modello: 
+    
+    public interface LifeInterface {
+        void nextGeneration();
+        boolean isAlive(int row, int col);
+        void setCell(int row, int col, boolean alive);
+        ICell getCell(int x, int y);
+        Grid getGrid();
+        void resetGrids();
+    }
  </pre>
 
 <h2>Problem analysis</h2>
