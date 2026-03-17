@@ -11,14 +11,14 @@ public interface LifeInterface {
     void setCell(int row, int col, boolean alive);
 
     /** Restituisce il numero di righe e colonne */
-// int getRows();
-// int getCols();
+//    int getRows();
+//    int getCols();
     
     /** Restituisce la Cella */
     ICell getCell(int x, int y);
     
     /** Restituisce la grid */
-    Grid getGrid();
+    IGrid getGrid();
     
     /** pulisce */
     void resetGrids();
