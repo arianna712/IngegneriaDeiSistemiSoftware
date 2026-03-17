@@ -18,7 +18,7 @@ Laboratorio di <b>Ingegneria dei Sistemi Software</b> a.a. 2025/2026 di Tosello 
   in Java con dispositivi Mock di I/O. <i>Distribuzione</i>: file jar.
 - [ConwayLife Sprint2](ConwayLife/Sprint2/conway26Java): <b>evoluzione</b> del primo prototipo
   con un dispositivo di output realizzato in Swing. <i>Distribuzione</i>: file jar
-- [ConwayLife Sprint3](ConwayLife/Sprint3/conway26Java): <b>evoluzione</b> del primo prototipo
+- [ConwayLife Sprint3](ConwayLife/Sprint3/conway26GuiHtml): <b>evoluzione</b> del primo prototipo
   con distibuzione tramite server e pagine html.
 
 ### Sistemi come servizi
