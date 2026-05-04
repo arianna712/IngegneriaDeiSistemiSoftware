@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/mystyle.css">
+<!--
+    <script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style>
+.code-block {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+</style> 
+</head>
+<title>Firefly</title>
+ 
+    
+
+<body>
+<div id="top">
+<h1>Firefly Sprint A</h1>
+</div>  
+
+<div class="body">  
+
+<h2>Introduction</h2>
+<b>Goal</b>:Il progetto firefly ha come scopo quello di simmulare il comportamento di una lucciola</b>.
+
+<h2>Requirements</h2>
+
+Definire un modello qak del sistema firefly che simula il comportamento di una lucciola.
+
+<h2>Requirement analysis</h2>
+Il sistema firefly ha lo scopo di modellare una lucciola che manifesta un comportamento ciclico di accensione e spegnimento.
+Il comportamento della lucciola deve essere rappresentato da un QActor, che alterna stati di accensione e spegnimento a
+intervalli di tempo variabili, determinati da un timer interno.
+Il sistema deve inoltre prevedere una modalità di visualizzazione del comportamento della lucciola. A tal fine, si utilizza 
+un progetto separato denominato griddisplay, che consente la rappresentazione grafica tramite una pagina HTML contenente una griglia. 
+In tale griglia, un quadratino rappresenta la lucciola e ne visualizza lo stato (acceso/spento).
+
+<pre class="code-block"><code>
+	Context ctxfirefly ip [ host="localhost" port=8040 ]
+	Context ctxgrid ip [ host="127.0.0.1" port=8050 ]
+
+	ExternalQActor griddisplay context ctxgrid
+
+	QActor firefly1 context ctxfirefly {
+	    [#
+	        var X = 1
+	        var Y = 1
+	    #]
+
+	    State s0 initial {
+	        printCurrentMessage color green
+	    }
+
+	    Goto flash
+	}
+</code></pre>
+
+	
+<h2>Problem analysis</h2>
+Il comportamento della lucciola può essere modellato come un ciclo continuo di due stati: acceso e spento, 
+gestiti da un actor che esegue un loop di esecuzione.
+L’intervallo temporale tra le transizioni di stato non è fisso, ma viene generato dinamicamente tramite un 
+timer interno, che può assumere valori casuali in un intervallo prefissato (ad esempio tra 500ms e 1000ms).
+
+<pre class="code-block"><code>
+State flash{
+
+    [# var Timer = java.util.Random().nextLong(500L,1000L) #]
+
+    delayVar Timer
+
+    // accensione lucciola
+    forward griddisplay -m cellstate : cellstate($X, $Y, 1)
+
+    delayVar Timer
+
+    // spegnimento lucciola
+    forward griddisplay -m cellstate : cellstate($X, $Y, 0)
+
+    printCurrentMessage color yellow
+}
+
+Goto flash
+</code></pre>
+
+<h2>Test plans</h2> 
+
+
+<h2>Project</h2> 
+ 
+ 
+
+<h2>Testing</h2> 
+ 
+
+<h2>Deployment</h2> 
+
+ 
+<h2>Maintenance</h2> 
+ 
+<!-- USEFUL
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+</td>
+<td></td>
+</tr>
+</table>
+-->
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+By Arianna Tosello email: arianna.tosello2@studio.unibo.it, 
+<!-- <img src="./img/mbot-S.jpg" alt="mbot" width="15%" height="15%"> -->
+<img src="./img/emiglio.png" alt="emiglio" width="15%" height="15%">
+GIT repo: https://github.com/arianna712/IngegneriaDeiSistemiSoftware
+</div> 
+</body>
+</html>

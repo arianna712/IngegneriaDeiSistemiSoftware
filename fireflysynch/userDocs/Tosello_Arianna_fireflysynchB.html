@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/mystyle.css">
+
+<style>
+.code-block {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    padding: 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border-left: 4px solid #4a90e2;
+}
+</style>
+</head>
+
+<title>FireflySynch Sprint B</title>
+
+<body>
+
+<div id="top">
+<h1>FireflySynch – Sprint B</h1>
+</div>
+
+<div class="body">
+
+<h2>Introduction</h2>
+<b>Goal</b>: Lo Sprint B estende il sistema FireflySynch realizzato nello Sprint A introducendo
+un sonar che rileva la presenza di ostacoli.
+Le tre lucciole lampeggiano inizialmente in modo indipendente; quando il sonar rileva
+un ostacolo a distanza inferiore a una soglia prestabilita, le lucciole devono
+lampeggiare in modo sincronizzato.
+Quando l’ostacolo si allontana oltre la soglia, le lucciole tornano a lampeggiare con
+frequenze casuali e indipendenti.</b>
+
+<h2>Requirements</h2>
+Il sistema deve soddisfare i seguenti requisiti:<br>
+<ul>
+    <li>Il sistema è composto da 3 lucciole.</li>
+    <li>Ogni lucciola lampeggia inizialmente con una frequenza propria costante.</li>
+    <li>Il sistema è dotato di un sonar che misura la distanza di un ostacolo.</li>
+    <li>Quando la distanza rilevata è minore di una soglia DMIN, le lucciole devono
+        lampeggiare in modo sincronizzato.</li>
+    <li>Quando la distanza torna maggiore o uguale a DMIN, le lucciole devono
+        tornare a lampeggiare in modo non sincronizzato.</li>
+</ul>
+
+<h2>Requirement analysis</h2>
+Dal punto di vista architetturale il sistema è composto dai seguenti componenti:<br>
+<ul>
+    <li>3 QActor lucciola (firefly1, firefly2, firefly3), che gestiscono il lampeggio
+        ON/OFF ed inviano il proprio stato alla griglia.</li>
+    <li>Un QActor orchestratore, che riceve i dati dal sonar e decide quando attivare
+        o disattivare la sincronizzazione.</li>
+    <li>Un QActor sonar (sonarmock), che simula la rilevazione della distanza
+        di un ostacolo.</li>
+</ul>
+
+L’orchestratore svolge il ruolo di componente centrale di controllo, coordinando il
+comportamento delle lucciole in base agli eventi provenienti dal sonar.
+Questa scelta permette di separare chiaramente la logica di rilevazione
+degli ostacoli dalla gestione del lampeggio delle lucciole.
+
+<pre class="code-block"><code>
+System fireflysynch_sonar
+
+Dispatch cellstate : cellstate(X,Y,COLOR)
+Event sonardata    : distance(D)
+Event sync         : sync(TIMER)
+Event unsync       : unsync(CMD)
+</code></pre>
+
+<h2>Problem analysis</h2>
+Il comportamento delle lucciole rimane modellato come una macchina a stati a due stati:
+<ul>
+    <li>turnOn</li>
+    <li>turnOff</li>
+</ul>
+
+Ogni lucciola utilizza un timer locale per alternare lo stato ON/OFF.
+La durata del timer può essere modificata dinamicamente per ottenere
+la sincronizzazione.
+
+Il sonar emette periodicamente un evento <i>sonardata(distance)</i>.
+L’orchestratore, alla ricezione di tale evento, confronta la distanza con una
+soglia DMIN:
+<ul>
+    <li>se la distanza è minore di DMIN e il sistema non è sincronizzato,
+        l’orchestratore invia un evento sync a tutte le lucciole;</li>
+    <li>se la distanza è maggiore o uguale a DMIN e il sistema risulta sincronizzato,
+        l’orchestratore invia un evento unsync per ripristinare il comportamento
+        casuale.</li>
+</ul>
+
+<pre class="code-block"><code>
+QActor orchestrator context ctxfireflysynch {
+    [# 
+       val DMIN = 50
+       var Synced = false
+    #]
+
+    State s0 initial {
+        [# clearlog("./logs/app_firefly.log") #]
+        create firefly _"1"
+        create firefly _"2"
+        create firefly _"3"
+    }
+    Goto wait
+
+    State wait { }
+
+    Transition t0
+        whenEvent sonardata -> handleSonar
+
+    State handleSonar {
+        onMsg( sonardata : distance(D) ) {
+            [# val dist = payloadArg(0).toInt() #]
+
+            if [# dist < DMIN && !Synced #] {
+                [# Synced = true #]
+                emit sync : sync(1000)
+            }
+
+            if [# dist >= DMIN && Synced #] {
+                [# Synced = false #]
+                emit unsync : unsync(ok)
+            }
+        }
+    }
+    Goto wait
+}
+</code></pre>
+
+<h2>Test plans</h2>
+<ul>
+    <li>Verificare che, in assenza di ostacoli, le lucciole lampeggino con
+        frequenze casuali.</li>
+    <li>Verificare che, alla rilevazione di un ostacolo sotto DMIN,
+        le lucciole si sincronizzino.</li>
+    <li>Verificare che, una volta superata nuovamente DMIN,
+        le lucciole tornino a lampeggiare in modo indipendente.</li>
+</ul>
+
+<h2>Project</h2>
+Lo Sprint B riutilizza l’architettura dello Sprint A, estendendola con nuovi attori
+e nuovi eventi senza introdurre modifiche invasive, garantendo così modularità
+ed estensibilità del sistema.
+
+<h2>Testing</h2>
+
+<h2>Deployment</h2>
+
+<h2>Maintenance</h2>
+
+<br/><br/>
+</div>
+
+<div style="background-color:rgba(86, 56, 253, 0.9);
+     width:60%; text-align:left; color:white">
+By Arianna Tosello email: arianna.tosello2@studio.unibo.it<br>
+<img src="./img/emiglio.png" alt="emiglio" width="15%" height="15%"><br>
+GIT repo: https://github.com/arianna712/IngegneriaDeiSistemiSoftware
+</div>
+
+</body>
+</html>
+

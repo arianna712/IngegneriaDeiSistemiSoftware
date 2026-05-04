@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/mystyle.css">
+<!--
+    <script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style>
+.code-block {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    padding: 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border-left: 4px solid #4a90e2;
+}
+</style>
+</head>
+<title>FireflySynch</title>
+ 
+    
+
+<body>
+<div id="top">
+<h1>FireflySynch Sprint A</h1>
+</div>  
+
+<div class="body">  
+
+<h2>Introduction</h2>
+<b>Goal</b>: Il sistema FireflySynch simula un ambiente composto da tre lucciole che inizialmente lampeggiano in modo indipendente, ciascuna con una propria frequenza costante.
+L’obiettivo del sistema è ottenere la sincronizzazione del lampeggio delle tre lucciole dopo 10 secondi.</b>.
+
+<h2>Requirements</h2>
+Il sistema deve soddisfare i seguenti requisiti: <br>
+<ul>
+    <li>Il sistema è composto da 3 lucciole</li>
+    <li>Inizialmente, ogni lucciola lampeggia con una frequenza propria costante e indipendente.</li>
+    <li>Dopo 10 secondi dall’avvio del sistema, le lucciole devono sincronizzare il loro lampeggio.</li>
+</ul>
+
+<h2>Requirement analysis</h2>
+Dal punto di vista architetturale, il sistema può essere scomposto nei seguenti componenti:<br>
+<ul>
+    <li>3 QActor lucciola (firefly1, firefly2, firefly3), responsabili del lampeggio e aventi una frequenza propria costante.</li>
+    <li>Un actor orchestratore (lucciola regina), un attore centrale che decide la frequenza comune e distribuisce il valore deciso alle lucciole dopo 10 secondi.</li>
+</ul>
+Come alternativa all'orchestratore si sarebbe anche potuto fare un broadcast dio sicnronizzazione dove un attore invia degli impulsi periodici e tutte le lucciole si sincronizzazno sul clock comune. <br>
+Oppure si sarebbe potuto optare per una sincronizzazione implicita delle lucciole dopo un timeout prestabilito su una frequenza comune predefinita. <br>
+Infine si sarebbe potuta adottare anche una sincronizzazione distribuita peer-to-peer dove ogni lucciola adatta la propria frequenza in base alle altre. <br>
+Si è scelto di adottare la strategia basata su orchestratore, in quanto rappresenta un buon compromesso tra semplicità e controllo del sistema. Risulta infatti più strutturata rispetto alla sincronizzazione 
+implicita e meno complessa rispetto alle soluzioni completamente distribuite (broadcast o peer-to-peer), garantendo una gestione centralizzata del comportamento di sincronizzazione delle lucciole.
+
+<pre class="code-block"><code>
+	System fireflysynch
+
+	Dispatch cellstate  : cellstate(X,Y,COLOR) "commute cell state on grid"
+	Event sync : sync(TIMER) "shared frequency from orchestrator"
+
+	Context ctxfireflysynch ip [ host= "localhost" port=8040 ]
+	Context ctxgrid         ip [ host= "127.0.0.1" port=8050 ]
+
+	ExternalQActor griddisplay context ctxgrid
+
+	QActor orchestrator context ctxfireflysynch {
+		State s0 initial {
+			...
+		}
+
+	}
+
+	QActor firefly context ctxfireflysynch dynamicOnly {
+		
+		State s0 initial {
+			...
+		}
+		
+	}
+</code></pre>
+
+	
+<h2>Problem analysis</h2>
+Il comportamento delle lucciole è modellato come una macchina a stati con due stati principali:
+<ul>
+    <li>turnOn</li>
+    <li>turnOff</li>
+</ul>
+
+Ogni lucciola invia il proprio stato alla griglia tramite cellstate, alterna ON/OFF utilizzando timer locali
+e utilizza una variabile Timer che può essere modificata dinamicamente.
+<br>
+La sincronizzazione avviene tramite un evento proveniente dall'orchestratore. sync(TIMER). Qunado una lucciola riceve l'evento entra nello stato
+handlesync, aggiorna la variabile Timmer e adotta la nuova frequenza comune.
+<pre class="code-block"><code>
+	System fireflysynch
+
+	Dispatch cellstate  : cellstate(X,Y,COLOR) "commute cell state on grid"
+	Event sync : sync(TIMER) "shared frequency from orchestrator"
+
+	Context ctxfireflysynch ip [ host= "localhost" port=8040 ]
+	Context ctxgrid         ip [ host= "127.0.0.1" port=8050 ]
+
+	ExternalQActor griddisplay context ctxgrid
+
+	QActor orchestrator context ctxfireflysynch {
+		State s0 initial {
+			[# clearlog("./logs/app_firefly.log") #]
+
+			create firefly _"1"
+			create firefly _"2"
+			create firefly _"3"
+		}
+		Goto waitAndSync
+		
+		State waitAndSync {
+			delay 8000 
+			
+			[# val SyncTimer = 1000L #]
+			println("$name | Invia sync") color red
+			
+			emit sync : sync($SyncTimer)
+		}
+	}
+
+	QActor firefly context ctxfireflysynch dynamicOnly {
+		[# 
+		   var X = 0 
+		   var Y = 0 
+		   var Timer = 500L
+		   
+		   fun setCellCoords( ) { 
+		   	   val coordY = name.replace("firefly_","") 
+		   	   Y = coordY.toInt() 
+		   }
+		#] 
+		
+		State s0 initial {
+			[# setCellCoords( ) #]
+			[# Timer = java.util.Random().nextLong(1000L, 2000L ) #]  
+		}
+		Goto turnOn
+		
+		State turnOn {
+			forward griddisplay -m cellstate : cellstate($X, $Y, 1) 
+		}
+		Transition t1 
+			whenTime 500   -> turnOff          
+			whenEvent sync -> handlesync
+
+		State turnOff {
+			forward griddisplay -m cellstate : cellstate($X, $Y, 0)
+		}
+		Transition t2
+			whenTimeVar Timer -> turnOn        
+			whenEvent sync    -> handlesync
+		
+
+		State handlesync{
+			onMsg( sync : sync(A) ) { 
+				[# 
+				   val t = payloadArg(0) 
+				   val T = t.toLong() 
+				   Timer = T 
+				#] 
+				println("$name | Ricevuta frequenza $T") color green 
+			}
+		}
+		Goto turnOn 
+	}
+</code></pre>
+
+<h2>Test plans</h2> 
+
+
+<h2>Project</h2> 
+ 
+ 
+
+<h2>Testing</h2> 
+ 
+
+<h2>Deployment</h2> 
+
+ 
+<h2>Maintenance</h2> 
+ 
+<!-- USEFUL
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+</td>
+<td></td>
+</tr>
+</table>
+-->
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+By Arianna Tosello email: arianna.tosello2@studio.unibo.it, 
+<!-- <img src="./img/mbot-S.jpg" alt="mbot" width="15%" height="15%"> -->
+<img src="./img/emiglio.png" alt="emiglio" width="15%" height="15%">
+GIT repo: https://github.com/arianna712/IngegneriaDeiSistemiSoftware
+</div> 
+</body>
+</html>
