@@ -22,8 +22,13 @@ Laboratorio di <b>Ingegneria dei Sistemi Software</b> a.a. 2025/2026 di Tosello 
   con distibuzione tramite server e pagine html.
 
 ### Sistemi come servizi
+- [SistemaSJavalin Project]
+- [protoactor26]
+- [SistemaSProtoactor]
+- [conway26Protoactors]
 
-- ...
+- [firefly] 
+- [fireflysinch]
 
 ### Sistema ConwayLife con pagine HTML
 
