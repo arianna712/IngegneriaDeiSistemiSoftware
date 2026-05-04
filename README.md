@@ -27,8 +27,8 @@ Laboratorio di <b>Ingegneria dei Sistemi Software</b> a.a. 2025/2026 di Tosello 
 - [SistemaSProtoactor]
 - [conway26Protoactors]
 
-- [firefly] 
-- [fireflysinch]
+- [firefly] (firefly)
+- [fireflysinch] (fireflysynch)
 
 ### Sistema ConwayLife con pagine HTML
 
