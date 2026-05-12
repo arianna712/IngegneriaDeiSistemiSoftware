@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/mystyle.css">
+<!--
+    <script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style>
+.code-block {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    padding: 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border-left: 4px solid #4a90e2;
+}
+</style>
+</head>
+<title>DDR</title>
+ 
+    
+
+<body>
+<div id="top">
+<h1>DDR Sprint 1</h1>
+</div>  
+
+<div class="body">  
+
+<h2>Introduction</h2>
+<b>Goal</b>: Costruire un sistema software che comanda un Differential Drive Robot (DDR) in modo che, partendo dalla posizione iniziale HOME, il robot si sposti lungo il perimetro di una stanza rettangolare vuota
+<h2>Requirements</h2>
+Costruire un sistema software che comanda un Differential Drive Robot (DDR) in modo che, partendo dalla posizione iniziale HOME, il robot si sposti lungo il perimetro di una stanza rettangolare vuota.
+Il DDR si deve fermare quando tornato in HOME.
+Il DDR è anche sensibile ai dati rilevati da un Radar. Quando il Radar rileva un 'intruso' a una distanza minore di una distanza prefissata ``DMIN``: <br>
+<ul>
+    <li>se il DDR si sta muovendo , il DDR si ferma fino a che il Radar non rileva più un 'intruso' così vicino</li>
+    <li>se il DDR è fermo in HOME, il DDR ruota su sè stesso fino a che un 'intruso' così vicino scompare</li>
+</ul>
+
+<h2>Requirement analysis</h2>
+Il sistema software analizzato è composto da diverse entità:
+<ul>
+	<li>HOME: nei requisiti rappresenta sia la posizione iniziale del DDR 
+all'interno della stanza sia la posizione finale del percorso lungo il perimetro. <br>
+Per poter formalizzare questa entità è necessario prima definire in modo preciso il modello della stanza. Essa può essere rappresentata come 
+un rettangolo in un piano euclideo, caratterizzato da una base B e un'altezza H, entrambe espresse in metri. Introducendo un sistema di assi cartesiani, ogni punto della stanza può essere identificato tramite una coppia di coordinate (X,Y).
+Tuttavia, il robot non può essere considerato come un punto materiale, poiché occupa uno spazio fisico. Si assume quindi che esso abbia una forma quadrata di lato R. Di conseguenza, risulta più opportuno discretizzare l'ambiente, 
+rappresentando la stanza come una griglia composta da celle, ciascuna corrispondente a un'unità robotica compatibile con le dimensioni del robot stesso. <br>
+All'interno di questa rappresentazione, la HOME viene definita come un'area in grado di contenere completamente il robot. In pratica, essa corrisponde a una cella 
+predefinita della griglia che modella la stanza e che rappresenta sia il punto di partenza sia quello di arrivo del percorso. <br>
+Possiamo formalizzare quanto detto con il seguente codice Kotlin:
+</li>
+
+
+<pre class="code-block"><code>
+[# 
+	/**
+ 	 * Stanza DDR
+	 *
+ 	 * Sistema di riferimento: asse x verso destra, asse y verso il basso (convenzione grafica).
+ 	 *
+ 	 * @property B larghezza della stanza in unità robotiche (numero di celle su x)
+ 	 * @property H altezza della stanza in unità robotiche (numero di celle su y)
+  	 * @property R lato dell'unità robotica in metri — coincide con il lato di ogni cella
+ 	 *
+ 	 * Dimensioni fisiche della stanza: (B * R) metri × (H * R) metri
+ 	 */
+	data class Stanza(
+    	val B: Double,
+    	val H: Double,
+    	val R: Double
+	) {
+	    /** Larghezza fisica della stanza in metri */
+	    val larghezzaMetri: Double get() = B * R
+
+    	/** Altezza fisica della stanza in metri */
+    	val altezzaMetri: Double get() = H * R
+
+    	/** Posizione HOME: angolo in alto a sinistra, cella (0, 0) */
+    	val home: Posizione = Posizione(0, 0)
+	}
+
+	/**
+ 	 * Posizione nella griglia, espressa in unità robotiche (celle).
+ 	 * (0, 0) corrisponde a HOME (angolo in alto a sinistra).
+ 	 *
+ 	 * @property x colonna (asse orizzontale, cresce verso destra)
+  	 * @property y riga   (asse verticale,   cresce verso il basso)
+	 */
+	data class Posizione(val x: Int, val y: Int)
+#]
+</code></pre>
+	<li>Radar: è un'entità proattiva che, a intervalli regolari, monitora l'area circostante il DDR con lo scopo 
+		di individuare eventuali “intrusi” presenti a una distanza inferiore a D_MIN
+		La caratteristica principale del radar è quella di fornire informazioni al sistema, in particolare la distanza rilevata D, 
+		espressa in metri. Poiché è disponibile il linguaggio custom QAK, si è scelto di modellare il radar come un attore. <br>
+
+		Affinché tali informazioni possano essere effettivamente utilizzate dal sistema per adattare il comportamento del DDR, è necessario definire 
+		in modo esplicito il meccanismo attraverso cui esse vengono rese accessibili. In generale, si possono considerare due possibili approcci: <br>
+		1. Il radar può inviare le informazioni rilevate tramite un evento, poiché non è a conoscenza a priori del destinatario che dovrà elaborarle. In questo caso, la comunicazione avviene in modalità event-driven, permettendo la diffusione del dato a tutti i componenti interessati del sistema. <br>
+		Si formalizza quindi il seguente attore:
+
+		<pre class="code-block"><code></code>
+		System ddrsystem
+
+		/*
+		* MODELLO DELL'ANALISTA
+		*/
+		
+		// -----definizione dei messaggi-----
+		Event radar : distance(D)
+
+		// -----definizione del contesto-----
+		Context ctxddrsys	ip [ host="localhost" 	port=8010 ]
+
+		// -----definizione degli attori-----
+		QActor radar context ctxddrsys {
+			[# 
+				var D = 0
+				var Timer = 1000L
+			#]
+			State s0 initial {
+				println("$name | starting") color green
+			}
+			Goto rileva_distanza
+			
+			State rileva_distanza{
+				// rilevamento della distanza D (in metri)
+				emit radar : distance(D)
+			}
+			Transition t0 
+				whenTimeVar Timer -> rileva_distanza
+		}
+		</code></pre>
+		<br>
+		2. altrimenti, il radar potrebbe comunicare a distanza rilevata in risposta ad una richiesta del sistema. In questo caso formalizzo il seguente attore:
+		<pre class="code-block"><code></code>
+		System ddrsystem
+
+		/*
+		* MODELLO DELL'ANALISTA
+		*/
+		
+		// -----definizione dei messaggi-----
+		Request getDistance : getDistance(D) "richiesta del sistema"
+		Reply   radar : distance(D)   for getDistance
+
+		// -----definizione del contesto-----
+		Context ctxddrsys	ip [ host="localhost" 	port=8010 ]
+
+		// -----definizione degli attori-----
+		QActor radar context ctxddrsys {
+			[# 
+				var D = 0
+				var Timer = 1000L
+			#]
+			State s0 initial {
+				println("$name | starting") color green
+			}
+			Goto rileva_distanza
+			
+			State rileva_distanza{
+				// rilevamento della distanza D (in metri)
+			}
+			Transition t0 
+				whenTimeVar Timer -> rileva_distanza
+				whenRequest getDistance -> handleRequest
+		
+			State handleRequest{
+				onMsg( getDistance : getDistance(D) ){
+					replyTo getDistance with radar : distance( $D )  
+				} 
+			}  
+			Transition t0 
+				whenTimeVar Timer -> rileva_distanza
+		}</code></pre>
+	</li>
+</ul>
+	
+<h2>Problem analysis</h2>
+
+
+<h2>Test plans</h2> 
+
+
+<h2>Project</h2> 
+ 
+ 
+
+<h2>Testing</h2> 
+ 
+
+<h2>Deployment</h2> 
+
+ 
+<h2>Maintenance</h2> 
+ 
+<!-- USEFUL
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+</td>
+<td></td>
+</tr>
+</table>
+-->
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+By Arianna Tosello email: arianna.tosello2@studio.unibo.it, 
+<!-- <img src="./img/mbot-S.jpg" alt="mbot" width="15%" height="15%"> -->
+<img src="./img/emiglio.png" alt="emiglio" width="15%" height="15%">
+GIT repo: https://github.com/arianna712/IngegneriaDeiSistemiSoftware
+</div> 
+</body>
+</html>
